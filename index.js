@@ -2,7 +2,30 @@ const { request, response } = require('express');
 const express = require('express')
 const app = express();
 const PORT = 3001
+const morgan = require('morgan')
 app.use(express.json())
+
+morgan.token('content',(req) => {
+    return req.method === 'POST' 
+    ? JSON.stringify(req.body)
+    : null 
+
+})
+
+app.use(morgan((tokens, req, res) => {
+    return [
+      tokens.method(req, res),
+      tokens.url(req, res),
+      tokens.status(req, res),
+      tokens.res(req, res, 'content-length'), '-',
+      tokens['response-time'](req, res), 'ms',
+      tokens.content(req, res)
+    ].join(' ')
+  }))
+
+morgan.token('body', function(req, res, param) {
+    return req.body;
+});
 
 let persons = [
     {
