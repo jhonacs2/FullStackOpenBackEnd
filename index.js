@@ -1,4 +1,4 @@
-const { request, response } = require('express');
+
 const express = require('express')
 const app = express();
 const PORT = 3001
@@ -26,6 +26,7 @@ app.use(morgan((tokens, req, res) => {
 morgan.token('body', function(req, res, param) {
     return req.body;
 });
+app.use(express.static('build'))
 
 let persons = [
     {
