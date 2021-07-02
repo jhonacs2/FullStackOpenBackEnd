@@ -82,10 +82,16 @@ const unknownEndpoint = (request, response) => {
 
 const errorHandler = (error, request, response, next) => {
     console.error(error.message)
-  
+    
+    if(error.name === 'Validation failed'){
+        return response.status(400).send({error : `${error}`})
+    }
     if (error.name === 'CastError') {
       return response.status(400).send({ error: 'malformatted id' })
-    } 
+    } else if(error.name === 'ValidationError') {
+      return response.status(400).send({error : `${error}`})
+    }
+    
   
     next(error)
   }
@@ -109,34 +115,33 @@ app.post('/api/persons/',(request,response,next) => {
         name:name,
         number:number.toString()
         
-      })
+    })
     if(!name || !number){
         return response.status(400).json({
-            msg:`you need to add a name or a number`
+            error:`error you need to add a name or a number`
         })
     }
-    const sameName = persons.find(person => person.name.toLowerCase() === name.toLowerCase()) 
-    console.log(persons)
-    if(sameName){
-        console.log(persons)
+          contact
+          .save()
+          .then(savedContact => savedContact.toJSON())
+          .then(savedAndFormatted =>{
+              response.json(savedAndFormatted)
+          })
+          .catch(error => {
+            next(error)
+          })
+
+
+        //   .then(savedContact => {
+        //     if(savedContact){
+        //         response.json(savedContact)
+        //     }else{
+        //         response.status(404).end()
+        //     } 
+        // })
+
         
-    }else{
-        
-    
-          contact.save()
-          .then(savedContact => {
-            if(savedContact){
-                response.json(savedContact)
-            }else{
-                response.status(404).end()
-            } 
-        })
-        .catch(error => next(error))
-        
-    }
-    
-    
-})
+    })
 
 app.delete('/api/persons/:id',(request,response) => {
     const id = request.params.id
@@ -167,13 +172,14 @@ app.get('/info',(request,response)=> {
 
 app.put('/api/persons/:id', (request, response, next) => {
     const {name, number} = request.body
-    console.log(name)
     const contact = {
-      name: name,
+      name:name,
       number: number
-    }         
-    Contact.findByIdAndUpdate(request.params.id, contact, { new: true })
+    }
+    console.log(number)         
+    Contact.findByIdAndUpdate(request.params.id, contact, { new: true, runValidators: true,context: 'query'},)
       .then(updatedNote => {
+        console.log(updatedNote)
         response.json(updatedNote)
       })
       .catch(error => next(error))
